@@ -1,0 +1,12 @@
+# Build artifacts
+/build/
+!/build/.gitkeep
+
+# Extracted datasets and raw opencode data (potentially very large / sensitive)
+/datasets/*
+!/datasets/.gitkeep
+
+# Local output
+/out/
+/source/opencode-reasoning-extractor
+

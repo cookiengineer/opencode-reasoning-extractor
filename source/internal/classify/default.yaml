@@ -1,0 +1,123 @@
+version: 1
+fallback: general
+thresholds:
+  multi_label: 0.35
+field_weights:
+  title: 3.0
+  user_text: 2.0
+  reasoning: 1.0
+  assistant_text: 1.0
+  tool_input: 1.5
+  tool_output: 0.5
+  path: 1.5
+categories:
+  - id: exploit-development
+    label: Exploit Development
+    keywords:
+      strong:
+        - exploit
+        - exploits
+        - rce
+        - remote code execution
+        - shellcode
+        - payload
+        - cve-
+        - "cve"
+        - privilege escalation
+        - privesc
+        - reverse shell
+        - proof of concept
+        - weaponize
+        - buffer overflow
+        - heap overflow
+        - use after free
+        - command injection
+        - stylesmuggler
+        - zero day
+        - 0day
+      weak:
+        - bypass
+        - injection
+        - deserialization
+        - metasploit
+        - fuzzing
+        - fuzz
+        - payloads
+        - poc
+  - id: cybersecurity
+    label: Cybersecurity
+    keywords:
+      strong:
+        - firewall
+        - nftables
+        - iptables
+        - intrusion detection
+        - ids
+        - ctf
+        - redteam
+        - red team
+        - purple team
+        - reconnaissance
+        - hardening
+        - threat model
+        - threat intel
+        - vulnerability
+        - malware
+        - siem
+        - ioc
+        - tls
+        - ssh
+        - incident response
+        - forensics
+      weak:
+        - detection
+        - forensic
+        - cryptography
+        - recon
+        - pentest
+        - penetration test
+        - security
+        - cyber
+        - certificate
+        - key exchange
+        - hash
+        - attack surface
+  - id: software-development
+    label: Software Development
+    keywords:
+      strong:
+        - refactor
+        - unit test
+        - go.mod
+        - package.json
+        - compile
+        - compiler
+        - lint
+        - typecheck
+        - type check
+        - api endpoint
+        - bugfix
+        - pull request
+        - codebase
+        - ci pipeline
+        - integration test
+        - function
+        - struct
+        - interface
+      weak:
+        - module
+        - class
+        - import
+        - regex
+        - sql
+        - frontend
+        - backend
+        - database
+        - go test
+        - jest
+        - pytest
+        - dependency
+        - endpoint
+        - schema
+        - web ui
+        - cli
