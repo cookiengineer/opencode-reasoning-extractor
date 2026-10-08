@@ -17,6 +17,7 @@ import (
 	"opencode-reasoning-extractor/internal/model"
 	"opencode-reasoning-extractor/internal/redact"
 	"opencode-reasoning-extractor/internal/store"
+	"opencode-reasoning-extractor/internal/tools"
 )
 
 // Version is the extractor version reported in the manifest.
@@ -172,7 +173,7 @@ func Run(opts Options) (*Stats, error) {
 			continue
 		}
 
-		meta := recordMeta(sess, projects, scores)
+		meta := recordMeta(sess, projects, scores, conv.Meta.ToolNames)
 		if !opts.NoTurns {
 			for _, turn := range convert.TurnRecords(conv, topics, scores, meta, opts.TurnContext) {
 				for _, topic := range topics {
@@ -311,7 +312,7 @@ func buildDoc(sess model.Session, conv model.Conversation) classify.Doc {
 	}
 }
 
-func recordMeta(sess model.Session, projects map[string]model.Project, scores map[string]float64) model.RecordMeta {
+func recordMeta(sess model.Session, projects map[string]model.Project, scores map[string]float64, toolNames []string) model.RecordMeta {
 	meta := model.RecordMeta{
 		Agent:       sess.Agent,
 		Model:       sess.Model.ID,
@@ -324,6 +325,7 @@ func recordMeta(sess model.Session, projects map[string]model.Project, scores ma
 		Tokens:      &sess.Tokens,
 		TimeCreated: sess.TimeCreated,
 		TimeUpdated: sess.TimeUpdated,
+		Tools:       tools.For(toolNames),
 	}
 	cost := sess.Cost
 	meta.Cost = &cost
@@ -395,6 +397,7 @@ func buildManifest(opts Options, rawCatalog []byte, exported map[string]bool, st
 		Topics:   stats.Topics,
 		Models:   stats.Models,
 		Agents:   stats.Agents,
+		Tools:    tools.All(),
 	}
 }
 

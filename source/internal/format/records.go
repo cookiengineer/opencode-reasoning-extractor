@@ -15,6 +15,9 @@ type Manifest struct {
 	Topics      map[string]int `json:"topics"`
 	Models      map[string]int `json:"models"`
 	Agents      map[string]int `json:"agents"`
+	// Tools is the static built-in tool registry (schemas are not persisted by
+	// OpenCode, so they are shipped here once per run).
+	Tools []model.ToolSchema `json:"tools,omitempty"`
 }
 
 // RLEntry is a per-session reward/quality record used to filter data for later

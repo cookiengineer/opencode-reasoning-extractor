@@ -1,5 +1,7 @@
 package model
 
+import "encoding/json"
+
 // ChatMessage is a single message in an OpenAI-compatible chat transcript.
 type ChatMessage struct {
 	Role             string     `json:"role"`
@@ -11,6 +13,14 @@ type ChatMessage struct {
 
 	// SourceID is internal bookkeeping and never serialized.
 	SourceID string `json:"-"`
+}
+
+// ToolSchema is a tool/function definition. OpenCode does not persist these, so
+// they come from the embedded static registry (see internal/tools).
+type ToolSchema struct {
+	Name        string          `json:"name"`
+	Description string          `json:"description,omitempty"`
+	Parameters  json.RawMessage `json:"parameters,omitempty"`
 }
 
 // ToolCall is an OpenAI-compatible tool invocation.
@@ -55,11 +65,14 @@ type ConversationMeta struct {
 	ReasoningTurns int
 	ToolCalls      int
 	ToolErrors     int
-	Patches        int
-	FilesTouched   int
-	FinishReasons  map[string]int
-	Redactions     int
-	SystemPrompt   bool
+	// ToolNames are the distinct tool names invoked in the session, in first
+	// use order.
+	ToolNames     []string
+	Patches       int
+	FilesTouched  int
+	FinishReasons map[string]int
+	Redactions    int
+	SystemPrompt  bool
 }
 
 // SessionRecord is the per-session JSONL payload.
@@ -94,4 +107,6 @@ type RecordMeta struct {
 	TimeCreated int64              `json:"time_created,omitempty"`
 	TimeUpdated int64              `json:"time_updated,omitempty"`
 	Redactions  int                `json:"redactions,omitempty"`
+	// Tools are the schemas of the tools actually invoked in this session.
+	Tools []ToolSchema `json:"tools,omitempty"`
 }

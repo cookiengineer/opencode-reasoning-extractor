@@ -34,6 +34,7 @@ func Build(sess model.Session, messages []model.Message, parts []model.Part, opt
 	}
 
 	conv := model.Conversation{SessionID: sess.ID}
+	seenTools := map[string]bool{}
 	conv.Meta = model.ConversationMeta{
 		Agent:         sess.Agent,
 		ModelID:       sess.Model.ID,
@@ -99,6 +100,10 @@ func Build(sess model.Session, messages []model.Message, parts []model.Part, opt
 					assistant.ToolCalls = append(assistant.ToolCalls, buildToolCall(p))
 					toolResults = append(toolResults, buildToolResult(p, opts))
 					conv.Meta.ToolCalls++
+					if !seenTools[p.Tool] {
+						seenTools[p.Tool] = true
+						conv.Meta.ToolNames = append(conv.Meta.ToolNames, p.Tool)
+					}
 					if p.State != nil && p.State.Status == "error" {
 						conv.Meta.ToolErrors++
 					}

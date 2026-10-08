@@ -44,6 +44,15 @@ func TestRunExtraction(t *testing.T) {
 	if rec.Meta.Agent != "build" {
 		t.Errorf("agent = %q", rec.Meta.Agent)
 	}
+	foundRead := false
+	for _, ts := range rec.Meta.Tools {
+		if ts.Name == "read" {
+			foundRead = true
+		}
+	}
+	if !foundRead {
+		t.Errorf("meta.tools missing the used tool: %+v", rec.Meta.Tools)
+	}
 
 	// No raw secret must survive.
 	raw, err := os.ReadFile(rootFile)
@@ -86,6 +95,10 @@ func TestRunExtraction(t *testing.T) {
 	}
 	if manifest["sessions_exported"].(float64) != 2 {
 		t.Errorf("manifest sessions = %v", manifest["sessions_exported"])
+	}
+	toolsArr, ok := manifest["tools"].([]any)
+	if !ok || len(toolsArr) != 11 {
+		t.Errorf("manifest tools = %T len=%d, want 11", manifest["tools"], len(toolsArr))
 	}
 }
 
