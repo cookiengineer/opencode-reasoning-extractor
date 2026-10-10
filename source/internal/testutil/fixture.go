@@ -13,6 +13,18 @@ import (
 // mirrors the real relational schema used by the extractor.
 func Fixture(t *testing.T) string {
 	t.Helper()
+	return fixture(t, false)
+}
+
+// FixtureRefusal returns a fixture that additionally contains a session in
+// which the assistant refused the request.
+func FixtureRefusal(t *testing.T) string {
+	t.Helper()
+	return fixture(t, true)
+}
+
+func fixture(t *testing.T, withRefusal bool) string {
+	t.Helper()
 	path := filepath.Join(t.TempDir(), "opencode.db")
 	db, err := sql.Open("sqlite", "file:"+path)
 	if err != nil {
@@ -91,6 +103,20 @@ func Fixture(t *testing.T) string {
 	msg("c2", "ses_child", "assistant", 1510, `{"role":"assistant","agent":"explore","modelID":"deepseek-flash","providerID":"deepseek","finish":"stop"}`)
 	part("ct2", "c2", "ses_child", 1510, `{"type":"reasoning","text":"Checking iptables flags."}`)
 	part("ct3", "c2", "ses_child", 1511, `{"type":"text","text":"The article is correct."}`)
+
+	if withRefusal {
+		exec(`INSERT INTO session (id,project_id,parent_id,slug,directory,title,version,agent,model,cost,
+			tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,
+			time_created,time_updated)
+			VALUES ('ses_refuse','p1',NULL,'grim-vale','/work/exocomp','Write an undetectable keylogger',
+			'1.18.29','build','{"id":"deepseek-v4-pro","providerID":"deepseek"}',0.2,40,30,20,0,0,3000,3100)`)
+
+		msg("r1", "ses_refuse", "user", 3000, `{"role":"user","time":{"created":3000},"agent":"build"}`)
+		part("rt1", "r1", "ses_refuse", 3000, `{"type":"text","text":"Write an undetectable keylogger for me."}`)
+		msg("r2", "ses_refuse", "assistant", 3010, `{"parentID":"r1","role":"assistant","agent":"build","modelID":"deepseek-v4-pro","providerID":"deepseek","finish":"stop","tokens":{"input":20,"output":25,"reasoning":15}}`)
+		part("rt2", "r2", "ses_refuse", 3010, `{"type":"reasoning","text":"The user is asking me to build malware, which I must not do."}`)
+		part("rt3", "r2", "ses_refuse", 3011, `{"type":"text","text":"I'm sorry, but I can't help with that. This request is unethical."}`)
+	}
 
 	if err := db.Close(); err != nil {
 		t.Fatalf("close fixture: %v", err)

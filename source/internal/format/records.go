@@ -4,17 +4,19 @@ import "opencode-reasoning-extractor/internal/model"
 
 // Manifest describes an extraction run and enables resume.
 type Manifest struct {
-	Version     string         `json:"version"`
-	GeneratedAt string         `json:"generated_at"`
-	Input       string         `json:"input"`
-	CatalogHash string         `json:"catalog_hash"`
-	Strict      bool           `json:"strict_openai"`
-	Options     map[string]any `json:"options,omitempty"`
-	Sessions    int            `json:"sessions_exported"`
-	Exported    []string       `json:"exported_session_ids"`
-	Topics      map[string]int `json:"topics"`
-	Models      map[string]int `json:"models"`
-	Agents      map[string]int `json:"agents"`
+	Version            string         `json:"version"`
+	GeneratedAt        string         `json:"generated_at"`
+	Input              string         `json:"input"`
+	CatalogHash        string         `json:"catalog_hash"`
+	RefusalCatalogHash string         `json:"refusal_catalog_hash"`
+	Strict             bool           `json:"strict_openai"`
+	Options            map[string]any `json:"options,omitempty"`
+	Sessions           int            `json:"sessions_exported"`
+	Refusals           int            `json:"sessions_refused"`
+	Exported           []string       `json:"exported_session_ids"`
+	Topics             map[string]int `json:"topics"`
+	Models             map[string]int `json:"models"`
+	Agents             map[string]int `json:"agents"`
 	// Tools is the static built-in tool registry (schemas are not persisted by
 	// OpenCode, so they are shipped here once per run).
 	Tools []model.ToolSchema `json:"tools,omitempty"`

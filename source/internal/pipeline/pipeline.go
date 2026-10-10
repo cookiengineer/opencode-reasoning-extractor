@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"opencode-reasoning-extractor/internal/classify"
+	"opencode-reasoning-extractor/internal/compliance"
 	"opencode-reasoning-extractor/internal/convert"
 	"opencode-reasoning-extractor/internal/format"
 	"opencode-reasoning-extractor/internal/model"
@@ -58,6 +59,7 @@ type Stats struct {
 	ToolCalls  int
 	ToolErrors int
 	Redactions int
+	Refusals   int
 }
 
 // Run performs the extraction.
@@ -89,6 +91,12 @@ func Run(opts Options) (*Stats, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	detector, err := compliance.Default()
+	if err != nil {
+		return nil, err
+	}
+	rawRefusals := compliance.RawCatalog()
 
 	stats := &Stats{Topics: map[string]int{}, Models: map[string]int{}, Agents: map[string]int{}}
 
@@ -135,6 +143,13 @@ func Run(opts Options) (*Stats, error) {
 			return nil, fmt.Errorf("session %s: %w", sess.ID, err)
 		}
 		if len(conv.Messages) == 0 {
+			continue
+		}
+		if verdict := detector.Evaluate(conv); verdict.Refused {
+			stats.Refusals++
+			if opts.Verbose {
+				fmt.Printf("  %s  skipped: refusal detected (score=%.1f matches=%v)\n", sess.ID, verdict.Score, verdict.Matches)
+			}
 			continue
 		}
 		if opts.MaxTopics > 0 && len(topics) > opts.MaxTopics {
@@ -207,7 +222,10 @@ func Run(opts Options) (*Stats, error) {
 		if err := out.WriteCatalog(rawCatalog); err != nil {
 			return nil, err
 		}
-		if err := out.WriteManifest(buildManifest(opts, rawCatalog, exported, stats)); err != nil {
+		if err := out.WriteRefusalCatalog(rawRefusals); err != nil {
+			return nil, err
+		}
+		if err := out.WriteManifest(buildManifest(opts, rawCatalog, rawRefusals, exported, stats)); err != nil {
 			return nil, err
 		}
 	}
@@ -373,19 +391,21 @@ func buildRL(conv model.Conversation, sess model.Session, topics []string, score
 	}
 }
 
-func buildManifest(opts Options, rawCatalog []byte, exported map[string]bool, stats *Stats) format.Manifest {
+func buildManifest(opts Options, rawCatalog, rawRefusals []byte, exported map[string]bool, stats *Stats) format.Manifest {
 	ids := make([]string, 0, len(exported))
 	for id := range exported {
 		ids = append(ids, id)
 	}
 	sort.Strings(ids)
 	sum := sha256.Sum256(rawCatalog)
+	refusalSum := sha256.Sum256(rawRefusals)
 	return format.Manifest{
-		Version:     Version,
-		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
-		Input:       opts.Input,
-		CatalogHash: hex.EncodeToString(sum[:]),
-		Strict:      opts.Strict,
+		Version:            Version,
+		GeneratedAt:        time.Now().UTC().Format(time.RFC3339),
+		Input:              opts.Input,
+		CatalogHash:        hex.EncodeToString(sum[:]),
+		RefusalCatalogHash: hex.EncodeToString(refusalSum[:]),
+		Strict:             opts.Strict,
 		Options: map[string]any{
 			"subagents": opts.Subagents,
 			"models":    opts.Models,
@@ -393,6 +413,7 @@ func buildManifest(opts Options, rawCatalog []byte, exported map[string]bool, st
 			"redact":    !opts.NoRedact,
 		},
 		Sessions: len(ids),
+		Refusals: stats.Refusals,
 		Exported: ids,
 		Topics:   stats.Topics,
 		Models:   stats.Models,

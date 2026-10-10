@@ -155,4 +155,9 @@ func (o *Output) WriteCatalog(raw []byte) error {
 	return os.WriteFile(filepath.Join(o.root, "catalog.yaml"), raw, 0o644)
 }
 
+// WriteRefusalCatalog copies the refusal dictionary used to filter sessions.
+func (o *Output) WriteRefusalCatalog(raw []byte) error {
+	return os.WriteFile(filepath.Join(o.root, "refusals.yaml"), raw, 0o644)
+}
+
 func (o *Output) String() string { return fmt.Sprintf("output(%s)", o.root) }

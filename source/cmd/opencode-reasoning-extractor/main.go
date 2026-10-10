@@ -71,8 +71,8 @@ flags:
 	if opts.DryRun {
 		mode = "dry-run"
 	}
-	fmt.Printf("%s %d sessions (%d subagents), %d tool calls (%d errors), %d redactions\n",
-		mode, stats.Sessions, stats.Subagents, stats.ToolCalls, stats.ToolErrors, stats.Redactions)
+	fmt.Printf("%s %d sessions (%d subagents), %d tool calls (%d errors), %d redactions, %d refusals skipped\n",
+		mode, stats.Sessions, stats.Subagents, stats.ToolCalls, stats.ToolErrors, stats.Redactions, stats.Refusals)
 	printCounts("topics", stats.Topics)
 	printCounts("models", stats.Models)
 	printCounts("agents", stats.Agents)

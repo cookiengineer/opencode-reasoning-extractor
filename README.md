@@ -40,6 +40,7 @@ Extracted dataset layout:
 <output-dir>/
   manifest.json                 run metadata and exported session ids
   catalog.yaml                  the keyword catalog used
+  refusals.yaml                 the refusal dictionary used
   sft/<topic>/sessions.jsonl    full multi-turn conversations
   sft/<topic>/turns.jsonl       per-assistant-turn samples
   subagents/<topic>/...         standalone subagent histories
@@ -65,6 +66,24 @@ Useful flags:
 | `--no-turns` / `--turn-context N` | skip or bound per-turn context (full context is large) |
 | `--models`, `--agents`, `--session`, `--limit`, `--min-reasoning-tokens` | filters |
 | `--resume`, `--force` | append to or overwrite a previous run |
+
+## Refusal filtering
+
+Sessions in which a planner or agent model **refuses** a request (for example
+`"I'm sorry, but I can't help with that"` or `"this request is unethical"`) are
+never exported. Refusals would otherwise teach the target model to deny work, so
+they are dropped by default and counted in the run summary and manifest. There
+is no opt-out: compliance is part of the extraction contract.
+
+Matching uses a bundled phrase dictionary (`internal/compliance/default.yaml`),
+seeded with the typical denial phrasings produced by DeepSeek v4 Pro and Flash
+in both English and Chinese. Patterns are case-insensitive regular expressions
+that are scored by field (`assistant_text` weighs more than `reasoning`); strong
+explicit denials trip the threshold on their own, while weak supporting phrases
+only count together. The dictionary is a curated seed, not an exhaustive list:
+refusals are open-ended, so grow `default.yaml` as new phrasings are observed.
+The effective dictionary is copied to `refusals.yaml` next to the output for
+provenance, and its hash is recorded in `manifest.json`.
 
 ## Building
 

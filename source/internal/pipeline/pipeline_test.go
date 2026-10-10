@@ -102,6 +102,54 @@ func TestRunExtraction(t *testing.T) {
 	}
 }
 
+func TestRunExcludesRefusals(t *testing.T) {
+	input := testutil.FixtureRefusal(t)
+	out := filepath.Join(t.TempDir(), "dataset")
+
+	stats, err := Run(Options{Input: input, Output: out, Subagents: "both"})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if stats.Refusals != 1 {
+		t.Fatalf("refusals = %d, want 1", stats.Refusals)
+	}
+	if stats.Sessions != 2 {
+		t.Fatalf("sessions = %d, want 2", stats.Sessions)
+	}
+
+	// The refusal session must not appear anywhere in the session output.
+	files, err := filepath.Glob(filepath.Join(out, "sft", "*", "sessions.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range files {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if contains(string(b), "ses_refuse") {
+			t.Errorf("refusal session leaked into %s", f)
+		}
+	}
+
+	// The effective refusal dictionary is shipped for provenance.
+	if _, err := os.Stat(filepath.Join(out, "refusals.yaml")); err != nil {
+		t.Errorf("refusals.yaml missing: %v", err)
+	}
+
+	mf, err := os.ReadFile(filepath.Join(out, "manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest map[string]any
+	if err := json.Unmarshal(mf, &manifest); err != nil {
+		t.Fatalf("manifest json: %v", err)
+	}
+	if manifest["sessions_refused"].(float64) != 1 {
+		t.Errorf("manifest sessions_refused = %v, want 1", manifest["sessions_refused"])
+	}
+}
+
 func TestRunDryRun(t *testing.T) {
 	input := testutil.FixtureDir(t)
 	out := filepath.Join(t.TempDir(), "dataset")
