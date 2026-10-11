@@ -10,31 +10,25 @@ agents while hiring smaller subagents (`explore`, `general`). Those sessions
 already contain rich chain-of-thought `reasoning` traces, tool calls, and tool
 results.
 
-The extractor turns that existing data into topic-partitioned, OpenAI-compatible
-datasets. It does **not** spend additional tokens to regenerate or distill
-reasoning. The traces were produced during normal work and are simply collected,
-classified, and cleaned up. This makes post-training Qwen 3.8 27b on planner
-reasoning effectively free of extra inference cost, and lets a body of existing
-real-world sessions (coding, exploit development, cybersecurity, ...) be reused
-instead of discarded.
+The extractor turns that existing opencode session data into topic-partitioned,
+OpenAI-compatible datasets. It does **not** spend additional tokens to regenerate
+or distill reasoning.
 
-Sessions that were already run with the target model
-(`huihui_ai/Qwen3.8-abliterated:27b`) are exported too, providing on-policy data
-for later reinforcement learning stages.
+The traces were produced during normal work and are simply collected, classified,
+and cleaned up. This makes post-training Qwen 3.8 27b on planner reasoning effectively
+free of extra inference cost, and lets a body of existing real-world sessions
+(like coding, exploit development, cybersecurity, ...) be reused instead of discarded.
 
 ## Usage
 
 ```sh
-opencode-extractor <opencode-data-dir> <output-dir>
-opencode-extractor ~/.local/share/opencode /path/to/extracted/dataset
+opencode-extractor <opencode-data-dir> <output-dir>;
+opencode-extractor ~/.local/share/opencode /path/to/extracted/reasoning-dataset;
 ```
 
-The input is the opencode local share directory (containing `opencode.db`) or the
-database file itself. Topics are detected automatically, so no manual sorting is
-needed. Subagent sessions are exported both inline in their parent transcript and
-as standalone top-level histories.
-
-Extracted dataset layout:
+The extracted reasoning dataset layout looks like this and is compatible with
+the [Qwen 3.8 Reasoning Trainer](https://github.com/cookiengineer/qwen-reasoning-trainer)
+project:
 
 ```
 <output-dir>/
@@ -50,7 +44,7 @@ Extracted dataset layout:
 Inspect before writing:
 
 ```sh
-opencode-extractor --dry-run --verbose ~/.local/share/opencode /path/to/out
+opencode-extractor --dry-run --verbose ~/.local/share/opencode /path/to/extracted/reasoning-dataset;
 ```
 
 Useful flags:
@@ -67,43 +61,34 @@ Useful flags:
 | `--models`, `--agents`, `--session`, `--limit`, `--min-reasoning-tokens` | filters |
 | `--resume`, `--force` | append to or overwrite a previous run |
 
-## Refusal filtering
+## Refusal Filtering
 
 Sessions in which a planner or agent model **refuses** a request (for example
 `"I'm sorry, but I can't help with that"` or `"this request is unethical"`) are
-never exported. Refusals would otherwise teach the target model to deny work, so
-they are dropped by default and counted in the run summary and manifest. There
-is no opt-out: compliance is part of the extraction contract.
+never exported.
 
-Matching uses a bundled phrase dictionary (`internal/compliance/default.yaml`),
-seeded with the typical denial phrasings produced by DeepSeek v4 Pro and Flash
-in both English and Chinese. Patterns are case-insensitive regular expressions
-that are scored by field (`assistant_text` weighs more than `reasoning`); strong
-explicit denials trip the threshold on their own, while weak supporting phrases
-only count together. The dictionary is a curated seed, not an exhaustive list:
-refusals are open-ended, so grow `default.yaml` as new phrasings are observed.
-The effective dictionary is copied to `refusals.yaml` next to the output for
-provenance, and its hash is recorded in `manifest.json`.
+Exporting those Refusals would otherwise teach the target model to deny work,
+so they are dropped by default and counted in the run summary and manifest.
 
 ## Building
+
+Building requires Go 1.27. The SQLite driver is pure Go, so no cgo is needed.
 
 ```sh
 cd /path/to/opencode-reasoning-extractor;
 make build;
 ```
 
-Requires Go 1.27. The SQLite driver is pure Go, so no cgo is needed.
-
 ## Testing
+
+Tests use a synthetic SQLite fixture and cover the store adapter, conversation
+conversion, tool-call pairing, topic classification, secret redaction, strict/
+rich output, and the full extraction pipeline.
 
 ```sh
 cd /path/to/opencode-reasoning-extractor;
 make test;
 ```
-
-Tests use a synthetic SQLite fixture and cover the store adapter, conversation
-conversion, tool-call pairing, topic classification, secret redaction, strict/
-rich output, and the full extraction pipeline.
 
 ## License
 
