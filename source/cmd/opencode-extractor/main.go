@@ -1,4 +1,4 @@
-// Command opencode-reasoning-extractor converts opencode session databases into
+// Command opencode-extractor converts opencode session databases into
 // topic-partitioned, OpenAI-compatible JSONL datasets for SFT and later RL.
 package main
 
@@ -19,9 +19,9 @@ func main() {
 }
 
 func run(args []string) error {
-	fs := flag.NewFlagSet("opencode-reasoning-extractor", flag.ContinueOnError)
+	fs := flag.NewFlagSet("opencode-extractor", flag.ContinueOnError)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), `usage: opencode-reasoning-extractor [flags] <opencode-data-dir> <output-dir>
+		fmt.Fprintf(fs.Output(), `usage: opencode-extractor [flags] <opencode-data-dir> <output-dir>
 
 Extracts opencode session histories into topic-partitioned OpenAI-compatible
 JSONL datasets. Reads only the relational session/message/part tables.

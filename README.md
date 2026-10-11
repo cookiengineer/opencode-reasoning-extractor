@@ -25,8 +25,8 @@ for later reinforcement learning stages.
 ## Usage
 
 ```sh
-opencode-reasoning-extractor <opencode-data-dir> <output-dir>
-opencode-reasoning-extractor ~/.local/share/opencode /path/to/extracted/dataset
+opencode-extractor <opencode-data-dir> <output-dir>
+opencode-extractor ~/.local/share/opencode /path/to/extracted/dataset
 ```
 
 The input is the opencode local share directory (containing `opencode.db`) or the
@@ -50,7 +50,7 @@ Extracted dataset layout:
 Inspect before writing:
 
 ```sh
-opencode-reasoning-extractor --dry-run --verbose ~/.local/share/opencode /path/to/out
+opencode-extractor --dry-run --verbose ~/.local/share/opencode /path/to/out
 ```
 
 Useful flags:
@@ -88,8 +88,8 @@ provenance, and its hash is recorded in `manifest.json`.
 ## Building
 
 ```sh
-cd source
-go build -o ../build/opencode-reasoning-extractor ./cmd/opencode-reasoning-extractor
+cd /path/to/opencode-reasoning-extractor;
+make build;
 ```
 
 Requires Go 1.27. The SQLite driver is pure Go, so no cgo is needed.
@@ -97,8 +97,8 @@ Requires Go 1.27. The SQLite driver is pure Go, so no cgo is needed.
 ## Testing
 
 ```sh
-cd source
-go test ./...
+cd /path/to/opencode-reasoning-extractor;
+make test;
 ```
 
 Tests use a synthetic SQLite fixture and cover the store adapter, conversation
